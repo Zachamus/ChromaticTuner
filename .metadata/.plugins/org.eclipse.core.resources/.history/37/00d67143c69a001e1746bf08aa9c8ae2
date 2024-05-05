@@ -1,0 +1,509 @@
+/*****************************************************************************
+* lab2a.c for Lab2A of ECE 153a at UCSB
+* Date of the Last Update:  October 23,2014
+*****************************************************************************/
+
+#define AO_LAB2A
+
+#include "qpn_port.h"
+#include "bsp.h"
+#include "chromatic_tuner.h"
+#include "lcd.h"
+#include "qpn_port.h"
+#include "bsp.h"
+#include "xintc.h"
+#include "xil_exception.h"
+#include "xparameters.h"
+#include "xtmrctr.h"
+#include "xtmrctr_l.h"
+#include "xgpio.h" 		// LED driver, used for General purpose I/i
+#include "xspi.h"
+#include "xspi_l.h"
+#include "fft.h"
+#include "note.h"
+#include "stream_grabber.h"
+#include "trig.h"
+#include "xtmrctr.h"
+
+//1024 decimate 4
+#define SAMPLES 2048 // AXI4 Streaming Data FIFO has size 512
+#define M 9 //2^m=samples
+#define CLOCK 100000000.0 //clock speed
+#define SAMPLING_FREQ 48828.125
+
+int int_buffer[SAMPLES];
+static float q[SAMPLES];
+static float q_next[SAMPLES];
+static float w[SAMPLES];
+static complex input[SAMPLES];
+static complex input_next[SAMPLES];
+static complex twiddles[SAMPLES] = {0};
+
+
+void read_fsl_values(complex *q, int n, int decimateFactor);
+void fftInit();
+float runFft(int drawHist);
+
+char* arr[5] = {"1", "2", "3", "4", "5"};
+extern XTmrCtr tmr;
+int A4Val = 440;
+int lowOct = 0;
+int highOct = 1;
+char lowOctBuf[2] = "0\0";
+char highOctBuf[2] = "1\0";
+int size;
+XTmrCtr timer;
+int written4Digits = 0;
+char A4ValueBuf[4];
+float frequency;
+int decimateFactor = 16;
+
+typedef struct Lab2ATag  {               //Lab2A State machine
+	QActive super;
+	short prev_vol;
+	short volume;
+	short mode;
+	short vol_ticks_till_timeout;
+	short mode_ticks_till_timeout;
+	short mode_idle;
+}  Lab2A;
+int Volume_Idle = 1;
+
+/* Setup state machines */
+/**********************************************************************/
+static QState LCD_initial (Lab2A *me);
+static QState LCD_on      (Lab2A *me);
+static QState LCD_Active  (Lab2A *me);
+static QState LCD_Idle  (Lab2A *me);
+static QState Menu (Lab2A *me);
+static QState OverTuner(Lab2A *me);
+static QState OverA4Value(Lab2A *me);
+static QState OverOctave(Lab2A *me);
+static QState OverHistogram(Lab2A *me);
+static QState Tuner (Lab2A *me);
+static QState A4Value (Lab2A *me);
+static QState Octave (Lab2A *me);
+static QState Histogram(Lab2A *me);
+
+
+
+/**********************************************************************/
+
+
+Lab2A AO_Lab2A;
+
+
+void LCD_ctor(void)  {
+	Lab2A *me = &AO_Lab2A;
+	me->prev_vol = 0;
+	me->volume = 0;
+	me->mode = 1;
+	me->vol_ticks_till_timeout = 12;
+	me->mode_ticks_till_timeout = 16;
+	me->mode_idle = 1;
+	QActive_ctor(&me->super, (QStateHandler)&LCD_initial);
+}
+
+
+QState LCD_initial(Lab2A *me) {
+    return Q_TRAN(&LCD_on);
+}
+
+QState LCD_on(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG:
+			return Q_HANDLED();
+		case Q_INIT_SIG:
+			return Q_TRAN(&Menu);
+	}
+
+	return Q_SUPER(&QHsm_top);
+}
+
+QState Menu(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG:
+			return Q_TRAN(&OverTuner);
+		case Q_INIT_SIG:
+			drawMenu(0, 0, 240, 320);
+			return Q_TRAN(&OverTuner);
+		case Q_EXIT_SIG:
+			return Q_HANDLED();
+	}
+	return Q_SUPER(&LCD_on);
+
+}
+
+QState OverTuner(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG:
+			printText(">", 15, 110, 1);
+			return Q_HANDLED();
+		case ENCODER_UP:
+			return Q_TRAN(&OverHistogram);
+		case ENCODER_DOWN:
+			return Q_TRAN(&OverA4Value);
+		case Q_EXIT_SIG:
+			clrArrow();
+			return Q_HANDLED();
+		case ENCODER_CLICK:
+			return Q_TRAN(&Tuner);
+	}
+	return Q_SUPER(&Menu);
+}
+
+QState OverA4Value(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG:
+			printText(">", 15, 140, 1);
+			return Q_HANDLED();
+		case ENCODER_UP:
+			return Q_TRAN(&OverTuner);
+		case ENCODER_DOWN:
+			return Q_TRAN(&OverOctave);
+		case ENCODER_CLICK:
+			return Q_TRAN(&A4Value);
+		case Q_EXIT_SIG:
+			clrArrow();
+			return Q_HANDLED();
+	}
+	return Q_SUPER(&Menu);
+}
+
+QState OverOctave(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG:
+			return Q_HANDLED();
+		case Q_INIT_SIG:
+			printText(">", 15, 170, 1);
+			return Q_HANDLED();
+		case ENCODER_UP:
+			return Q_TRAN(&OverA4Value);
+		case ENCODER_DOWN:
+			return Q_TRAN(&OverHistogram);
+		case ENCODER_CLICK:
+			return Q_TRAN(&Octave);
+		case Q_EXIT_SIG:
+			clrArrow();
+			return Q_HANDLED();
+	}
+	return Q_SUPER(&Menu);
+}
+
+QState OverHistogram(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG:
+			printText(">", 15, 200, 1);
+			return Q_HANDLED();
+		case ENCODER_UP:
+			return Q_TRAN(&OverOctave);
+		case ENCODER_DOWN:
+			return Q_TRAN(&OverTuner);
+		case ENCODER_CLICK:
+			return Q_TRAN(&Histogram);
+		case Q_EXIT_SIG:
+			clrArrow();
+			return Q_HANDLED();
+	}
+	return Q_SUPER(&Menu);
+}
+
+int A4HasAppeared = 0;
+int hasStartedTmr = 0;
+QState Tuner (Lab2A *me){
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG:
+			clrScr();
+
+			//title txt
+			printText("Tuner", 80, 40, 1);
+
+			//cents bar
+			fillRect(20, 160, 220, 180, 255, 255, 255);
+
+			//frequency txt
+			printText("f:", 20, 200, 1);
+
+			//octave range txt
+			printText("Octave Range:", 18, 240, 1);
+			sprintf(lowOctBuf, "%d", lowOct);
+			sprintf(highOctBuf, "%d", highOct);
+			printText("C", 62, 260, 1);
+			printText(lowOctBuf, 78, 260, 1);
+			printText("-", 110, 260, 1);
+			printText("C", 142, 260, 1);
+			printText(highOctBuf, 158, 260, 1);
+
+			fftInit();
+			return Q_HANDLED();
+		case BACK:
+			return Q_TRAN(&Menu);
+		case RUN_FFT:
+			frequency = runFft(0);
+			//ignore noise below set frequency
+			//if(frequency > 200.0) {
+
+			findNote(frequency, &timer); //stop timer in findNote
+			char freqBuf[5];
+			sprintf(freqBuf, "%d", (int) (frequency + 0.5));
+			if (freqBuf[3] == '\0') { //frequency has 3 digits
+				if (written4Digits) { //clear 4th digit
+					fillRect(72, 200, 240, 216, 147, 139, 161);
+					written4Digits = 0;
+				}
+				printText(freqBuf, 80, 200, 1);
+				printText("Hz", 128, 200, 1);
+			} else { //frequency has at least 4 digits
+				written4Digits = 1;
+				printText(freqBuf, 72, 200, 1);
+				printText("Hz", 136, 200, 1);
+			}
+
+//			xil_printf("frequency: %d Hz\r\n", (int)(frequency+.5));
+
+			//get time to run program
+			int ticks=XTmrCtr_GetValue(&timer, 0);
+			float tot_time=ticks/CLOCK;
+			xil_printf("program time: %dms \r\n",(int)(1000*tot_time));
+			return Q_HANDLED();
+		case ENCODER_UP:
+			if (hasStartedTmr) XTmrCtr_Reset(&tmr, 0);
+			if (!A4HasAppeared) {
+				printText("A4 = ", 40, 120, 1);
+				printText("Hz", 168, 120, 1);
+				sprintf(A4ValueBuf, "%d", A4Val);
+				printText(A4ValueBuf, 120, 120, 1);
+				A4HasAppeared = 1;
+			} else {
+				if (A4Val == 420){
+					A4Val = 460;
+				}
+				else {
+					A4Val--;
+				}
+				sprintf(A4ValueBuf, "%d", A4Val);
+				printText(A4ValueBuf, 120, 120, 1);
+			}
+			if (!hasStartedTmr) {
+				XTmrCtr_Start(&tmr, 0);
+				hasStartedTmr = 1;
+			}
+
+			return Q_HANDLED();
+		case ENCODER_DOWN:
+			if (hasStartedTmr) XTmrCtr_Reset(&tmr, 0);
+			if (!A4HasAppeared) {
+				printText("A4 = ", 40, 120, 1);
+				printText("Hz", 168, 120, 1);
+				sprintf(A4ValueBuf, "%d", A4Val);
+				printText(A4ValueBuf, 120, 120, 1);
+				A4HasAppeared = 1;
+			} else {
+				if (A4Val == 460){
+					A4Val = 420;
+				}
+				else{
+					A4Val = A4Val + 1;
+				}
+				sprintf(A4ValueBuf, "%d", A4Val);
+				printText(A4ValueBuf, 120, 120, 1);
+			}
+			if (!hasStartedTmr) {
+				XTmrCtr_Start(&tmr, 0);
+				hasStartedTmr = 1;
+			}
+			return Q_HANDLED();
+		case HIDE_A4:
+			fillRect(40, 120, 200, 136, 147, 139, 161);
+
+			//set pure note freqs w new A4 val
+			findNoteFreqs(lowOct, A4Val);
+			A4HasAppeared = 0;
+			hasStartedTmr = 0;
+			disableTimerInt();
+			return Q_HANDLED();
+		case Q_EXIT_SIG:
+			return Q_HANDLED();
+	}
+
+	return Q_SUPER(&Menu);
+}
+
+QState A4Value (Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG:
+			clrScr();
+			sprintf(A4ValueBuf, "%d", A4Val);
+			printText("A4 = ", 40, 140, 1);
+			printText("Hz", 168, 140, 1);
+			printText(A4ValueBuf, 120, 140, 1);
+			printText("Click Encoder", 16, 180, 1);
+			printText("To Confirm", 40, 196, 1);
+			return Q_HANDLED();
+		case ENCODER_UP:
+			if (A4Val == 420){
+				A4Val = 460;
+
+			}
+			else {
+				A4Val--;
+			}
+			sprintf(A4ValueBuf, "%d", A4Val);
+			printText(A4ValueBuf, 120, 140, 1);
+			return Q_HANDLED();
+		case ENCODER_DOWN:
+			if (A4Val == 460){
+				A4Val = 420;
+			}
+			else{
+				A4Val = A4Val + 1;
+
+			}
+			sprintf(A4ValueBuf, "%d", A4Val);
+			printText(A4ValueBuf, 120, 140, 1);
+			return Q_HANDLED();
+		case ENCODER_CLICK:
+			findNoteFreqs(lowOct, A4Val);
+			return Q_TRAN(&Menu);
+		case BACK:
+			return Q_TRAN(&Menu);
+		case Q_EXIT_SIG:
+			findNoteFreqs(lowOct, A4Val);
+			return Q_HANDLED();
+	}
+	return Q_SUPER(&Menu);
+}
+
+
+QState Octave (Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG:
+			sprintf(lowOctBuf, "%d", lowOct);
+			sprintf(highOctBuf, "%d", highOct);
+			clrScr();
+			printText("C", 62, 140, 1);
+			printText(lowOctBuf, 78, 140, 1);
+			printText("-", 110, 140, 1);
+			printText("C", 142, 140, 1);
+			printText(highOctBuf, 158, 140, 1);
+			printText("Click Encoder", 16, 180, 1);
+			printText("To Confirm", 40, 196, 1);
+			//printText("Octave", 50, 170);
+			return Q_HANDLED();
+		case ENCODER_UP: //go up an octave
+			if (lowOct == 0) {
+				lowOct = 7;
+				highOct = lowOct + 1;
+			} else {
+				lowOct = (lowOct - 1) % 8;
+				highOct = lowOct + 1;
+			}
+			sprintf(lowOctBuf, "%d", lowOct);
+			sprintf(highOctBuf, "%d", highOct);
+			printText(lowOctBuf, 78, 140, 1);
+			printText(highOctBuf, 158, 140, 1);
+			return Q_HANDLED();
+		case ENCODER_DOWN: //go down an octave
+			lowOct = (lowOct + 1) % 8;
+			highOct = lowOct + 1;
+			sprintf(lowOctBuf, "%d", lowOct);
+			sprintf(highOctBuf, "%d", highOct);
+			printText(lowOctBuf, 78, 140, 1);
+			printText(highOctBuf, 158, 140, 1);
+			return  Q_HANDLED();
+		case ENCODER_CLICK:
+			if (lowOct < 6) decimateFactor = 4;
+			else decimateFactor = 8;
+			findNoteFreqs(lowOct, A4Val);
+			return Q_TRAN(&Menu);
+		case BACK:
+			return Q_TRAN(&Menu);
+		case Q_EXIT_SIG:
+			return Q_HANDLED();
+	}
+	return Q_SUPER(&Menu);
+}
+QState Histogram(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG:
+			clrScr();
+			fftInit();
+			setFont(SmallFont);
+			char maxFBuf[10];
+			sprintf(maxFBuf, "%.2f", SAMPLING_FREQ / 2);
+			printText(maxFBuf, 170, 0, 0);
+			char binSpaceBuf[5];
+			sprintf(binSpaceBuf, "%d", SAMPLES / 2);
+			printText(binSpaceBuf, 190, 15, 0);
+			return Q_HANDLED();
+		case RUN_FFT:
+			runFft(1);
+			return Q_HANDLED();
+		case BACK:
+			return Q_TRAN(&Menu);
+		case Q_EXIT_SIG:
+			return Q_HANDLED();
+	}
+	return Q_SUPER(&Menu);
+}
+
+void read_fsl_values(complex* q, int n, int decimateFactor) {
+   int i;
+   unsigned int x;
+   stream_grabber_start();
+   stream_grabber_wait_enough_samples(1);
+   for(i = 0; i < n * decimateFactor; i+= decimateFactor) {
+//	   for (int j = 0; j < decimateFactor)
+	   int_buffer[i/decimateFactor] = stream_grabber_read_sample(i);
+	   x = int_buffer[i/decimateFactor];
+
+     asm("flt  %0, %1;"
+            "fmul %0, %0, %2;"
+            "addi %0, %0, -0xF000000;"
+               : "=r" (q[i/decimateFactor].re)
+               : "r" (x), "r" (0x40533333)
+     );
+
+      //q[i] = 3.3/67108864.0*x;
+      //q[i] = 3.3*x/67108864.0; // 3.3V and 2^26 bit precision. NEED TO USE INLINE ASSEMBLY FOR THIS, subtract 26 from exponent bits & mul by float in assembly
+
+   }
+
+   /*for(i = 0; i < n * 8; i+=8) {
+         int_buffer[i/8] = stream_grabber_read_sample(i);
+         x = int_buffer[i/8];
+         q[i/8] = 3.3*x/67108864.0; // 3.3V and 2^26 bit precision.
+   }*/
+}
+
+void fftInit() {
+	XTmrCtr_Initialize(&timer, XPAR_AXI_TIMER_0_DEVICE_ID);
+	uint32_t Control = XTmrCtr_GetOptions(&timer, 0) | XTC_CAPTURE_MODE_OPTION | XTC_INT_MODE_OPTION;
+	XTmrCtr_SetOptions(&timer, 0, Control);
+	stream_grabber_start();
+	read_fsl_values(input, SAMPLES, decimateFactor);
+	size = sizeof(input) / sizeof(input[0]);
+	FFT_get_twiddle_factors(SAMPLES, twiddles);
+}
+
+
+
+float runFft(int drawHist) {
+	XTmrCtr_Start(&timer, 0);
+	stream_grabber_start();
+	read_fsl_values(input, SAMPLES, decimateFactor);
+
+	for(int l=0;l<SAMPLES;l++) {
+		input[l].im = 0;
+	}
+	frequency = FFT_simple(input, SAMPLES, twiddles, drawHist, SAMPLING_FREQ/decimateFactor);
+	stream_grabber_start();
+	read_fsl_values(input_next, SAMPLES, decimateFactor);
+	for (int i = 0; i < SAMPLES; i++) {
+		input[i].re = input_next[i].re;
+	}
+
+	return frequency;
+}
+
+

@@ -1,0 +1,216 @@
+/*****************************************************************************
+* lab2a.c for Lab2A of ECE 153a at UCSB
+* Date of the Last Update:  October 23,2014
+*****************************************************************************/
+
+#define AO_LAB2A
+
+#include "qpn_port.h"
+#include "bsp.h"
+#include "chromatic_tuner.h"
+#include "lcd.h"
+#include "qpn_port.h"
+#include "bsp.h"
+#include "xintc.h"
+#include "xil_exception.h"
+#include "xparameters.h"
+#include "xtmrctr.h"
+#include "xtmrctr_l.h"
+#include "xgpio.h" 		// LED driver, used for General purpose I/i
+#include "xspi.h"
+#include "xspi_l.h"
+
+char* arr[5] = {"1", "2", "3", "4", "5"};
+extern XTmrCtr tmr;
+
+typedef struct Lab2ATag  {               //Lab2A State machine
+	QActive super;
+	short prev_vol;
+	short volume;
+	short mode;
+	short vol_ticks_till_timeout;
+	short mode_ticks_till_timeout;
+	short mode_idle;
+}  Lab2A;
+int Volume_Idle = 1;
+
+/* Setup state machines */
+/**********************************************************************/
+static QState LCD_initial (Lab2A *me);
+static QState LCD_on      (Lab2A *me);
+static QState LCD_Active  (Lab2A *me);
+static QState LCD_Idle  (Lab2A *me);
+static QState Menu (Lab2A *me);
+static QState OverTuner(Lab2A *me);
+static QState OverA4Value(Lab2A *me);
+static QState OverOctave(Lab2A *me);
+static QState OverHistogram(Lab2A *me);
+static QState Tuner (Lab2A *me);
+static QState A4Value (Lab2A *me);
+static QState Octave (Lab2A *me);
+static QState Histogram(Lab2A *me);
+
+
+
+/**********************************************************************/
+
+
+Lab2A AO_Lab2A;
+
+
+void LCD_ctor(void)  {
+	Lab2A *me = &AO_Lab2A;
+	me->prev_vol = 0;
+	me->volume = 0;
+	me->mode = 1;
+	me->vol_ticks_till_timeout = 12;
+	me->mode_ticks_till_timeout = 16;
+	me->mode_idle = 1;
+	QActive_ctor(&me->super, (QStateHandler)&LCD_initial);
+}
+
+
+QState LCD_initial(Lab2A *me) {
+//	xil_printf("\n\rInitialization");
+    return Q_TRAN(&LCD_on);
+}
+
+QState LCD_on(Lab2A *me) {
+//	xil_printf("Signal (On): %d\r\n", Q_SIG(me));
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG: {
+//			xil_printf("\n\rOn");
+		}
+
+		case Q_INIT_SIG: {
+			xil_printf("terminal retardation \r\n");
+			return Q_TRAN(&Menu);
+		}
+	}
+
+	return Q_SUPER(&QHsm_top);
+}
+
+QState Menu(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG: {
+
+			return Q_TRAN(&OverTuner);
+		}
+		case Q_INIT_SIG: {
+			drawMenu(0, 0, 240, 320);
+			return Q_TRAN(&OverTuner);
+		}
+		case Q_EXIT_SIG: {
+			return Q_HANDLED();
+		}
+	}
+	return Q_SUPER(&LCD_on);
+
+}
+
+QState OverTuner(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG: {
+			printText(">", 15, 110);
+			return Q_HANDLED();
+		}
+		case ENCODER_UP: {
+			return Q_TRAN(&OverHistogram);
+		}
+		case ENCODER_DOWN: {
+			return Q_TRAN(&OverA4Value);
+		}
+		case Q_EXIT_SIG: {
+			clrArrow();
+			return Q_HANDLED();
+		}
+		case ENCODER_CLICK: {
+			return Q_TRAN(&Tuner);
+		}
+	}
+	return Q_SUPER(&Menu);
+}
+
+QState OverA4Value(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG: {
+			printText(">", 15, 140);
+			return Q_HANDLED();
+		}
+		case ENCODER_UP: {
+			return Q_TRAN(&OverTuner);
+		}
+		case ENCODER_DOWN: {
+			return Q_TRAN(&OverOctave);
+		}
+		case Q_EXIT_SIG: {
+			clrArrow();
+			return Q_HANDLED();
+		}
+	}
+	return Q_SUPER(&Menu);
+}
+
+QState OverOctave(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG: {
+			return Q_HANDLED();
+		}
+		case Q_INIT_SIG: {
+			printText(">", 15, 170);
+			return Q_HANDLED();
+		}
+		case ENCODER_UP: {
+			return Q_TRAN(&OverA4Value);
+		}
+		case ENCODER_DOWN: {
+			return Q_TRAN(&OverHistogram);
+		}
+		case Q_EXIT_SIG: {
+			clrArrow();
+			return Q_HANDLED();
+		}
+	}
+	return Q_SUPER(&Menu);
+}
+
+QState OverHistogram(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG: {
+			printText(">", 15, 200);
+			return Q_HANDLED();
+		}
+		case ENCODER_UP: {
+			return Q_TRAN(&OverOctave);
+		}
+		case ENCODER_DOWN: {
+			return Q_TRAN(&OverTuner);
+		}
+		case Q_EXIT_SIG: {
+			clrArrow();
+			return Q_HANDLED();
+		}
+	}
+	return Q_SUPER(&Menu);
+}
+
+QState Tuner (Lab2A *me){
+	switch (Q_SIG(me)){
+	case Q_ENTRY_SIG: {
+		clrScr();
+		//xil_printf("Inside Tuner");
+		return Q_HANDLED();
+	}
+	case MODE1: {
+		return Q_TRAN(&Menu);
+	}
+	case Q_EXIT_SIG: {
+		return Q_HANDLED();
+	}
+	}
+
+	return Q_SUPER(&Menu);
+}
+
+

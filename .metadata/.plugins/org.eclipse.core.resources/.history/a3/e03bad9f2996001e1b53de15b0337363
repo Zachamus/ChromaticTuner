@@ -1,0 +1,319 @@
+/*****************************************************************************
+* lab2a.c for Lab2A of ECE 153a at UCSB
+* Date of the Last Update:  October 23,2014
+*****************************************************************************/
+
+#define AO_LAB2A
+
+#include "qpn_port.h"
+#include "bsp.h"
+#include "chromatic_tuner.h"
+#include "lcd.h"
+#include "qpn_port.h"
+#include "bsp.h"
+#include "xintc.h"
+#include "xil_exception.h"
+#include "xparameters.h"
+#include "xtmrctr.h"
+#include "xtmrctr_l.h"
+#include "xgpio.h" 		// LED driver, used for General purpose I/i
+#include "xspi.h"
+#include "xspi_l.h"
+
+char* arr[5] = {"1", "2", "3", "4", "5"};
+extern XTmrCtr tmr;
+
+typedef struct Lab2ATag  {               //Lab2A State machine
+	QActive super;
+	short prev_vol;
+	short volume;
+	short mode;
+	short vol_ticks_till_timeout;
+	short mode_ticks_till_timeout;
+	short mode_idle;
+}  Lab2A;
+int Volume_Idle = 1;
+
+/* Setup state machines */
+/**********************************************************************/
+static QState LCD_initial (Lab2A *me);
+static QState LCD_on      (Lab2A *me);
+static QState LCD_Active  (Lab2A *me);
+static QState LCD_Idle  (Lab2A *me);
+static QState Menu (Lab2A *me);
+static QState OverTuner(Lab2A *me);
+static QState OverA4Value(Lab2A *me);
+static QState OverOctave(Lab2A *me);
+static QState OverHistogram(Lab2A *me);
+
+
+/**********************************************************************/
+
+
+Lab2A AO_Lab2A;
+
+
+void LCD_ctor(void)  {
+	Lab2A *me = &AO_Lab2A;
+	me->prev_vol = 0;
+	me->volume = 0;
+	me->mode = 1;
+	me->vol_ticks_till_timeout = 12;
+	me->mode_ticks_till_timeout = 16;
+	me->mode_idle = 1;
+	QActive_ctor(&me->super, (QStateHandler)&LCD_initial);
+}
+
+
+QState LCD_initial(Lab2A *me) {
+//	xil_printf("\n\rInitialization");
+    return Q_TRAN(&LCD_on);
+}
+
+QState LCD_on(Lab2A *me) {
+//	xil_printf("Signal (On): %d\r\n", Q_SIG(me));
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG: {
+//			xil_printf("\n\rOn");
+		}
+
+		case Q_INIT_SIG: {
+			return Q_TRAN(&Menu);
+		}
+	}
+
+	return Q_SUPER(&QHsm_top);
+}
+
+//Menu Parent State for selected items
+QState Menu(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG: {
+			return Q_HANDLED();
+		}
+		case Q_INIT_SIG: {
+			return Q_TRAN(&OverTuner);
+		}
+		case Q_EXIT_SIG: {
+			return Q_HANDLED();
+		}
+	}
+	return Q_SUPER(&QHsm_top);
+}
+
+QState OverTuner(Lab2A *me) {
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG: {
+			return Q_HANDLED();
+		}
+		case Q_INIT_SIG: {
+			printText(">", 15, 110);
+			return Q_HANDLED();
+		}
+		case ENCODER_UP: {
+			return Q_TRAN(&OverHistogram);
+		}
+		case ENCODER_DOWN: {
+			return Q_TRAN(&OverA4Value);
+		}
+		case Q_EXIT_SIG: {
+			fillRect(15, 110, 16, 16);
+			return Q_HANDLED();
+		}
+	}
+
+}
+
+QState OverA4Value(Lab2A *me) {
+
+}
+
+QState OverOctave(Lab2A *me) {
+
+}
+QState OverHistogram(Lab2A *me) {
+
+}
+
+//		case ENCODER_UP: {
+////			xil_printf("Encoder Up from State A\n");
+//			if (me->volume >= 63)
+//				me->volume = 63;
+//			else
+//				me->volume++;
+//			Volume_Idle = 0;
+//			printVolume(me->volume, 1);
+//			return Q_TRAN(&LCD_Active);
+//		}
+//
+//		case ENCODER_DOWN: {
+////			xil_printf("Encoder Down from State A\n");
+//			if (me->volume <= 0) {
+//				me->volume = 0;
+//				me->prev_vol = 0;
+//			} else {
+//				me->volume--;
+//			}
+//			Volume_Idle = 0;
+//			printVolume(me->volume, 1);
+//			return Q_TRAN(&LCD_Active);
+//		}
+//
+//		case ENCODER_CLICK:  {
+////			xil_printf("Changing State\n");
+//			if (me->volume != 0) {
+//				me->prev_vol = me->volume;
+//				me->volume = 0;
+//			} else {
+//				me->volume = me->prev_vol;
+//			}
+//			Volume_Idle = 0;
+//			printVolume(me->volume, 1);
+//			return Q_TRAN(&LCD_Active);
+//		}
+//
+//		case MODE1: {
+//			printText("Mode:1", 70, 140);
+//			return Q_TRAN(&LCD_Active);
+//		}
+//		case MODE2: {
+//					printText("Mode:2", 70, 140);
+//					return Q_TRAN(&LCD_Active);
+//				}
+//		case MODE3: {
+//					printText("Mode:3", 70, 140);
+//					return Q_TRAN(&LCD_Active);
+//				}
+//		case MODE4: {
+//					printText("Mode:4", 70, 140);
+//					return Q_TRAN(&LCD_Active);
+//				}
+//		case MODE5: {
+//					printText("Mode:5", 70, 140);
+//					return Q_TRAN(&LCD_Active);
+//				}
+//
+//
+//		case Q_EXIT_SIG: {
+////			me->vol_ticks_till_timeout = 12;
+//			return Q_HANDLED();
+//		}
+//		case HIDE: {
+//		//			xil_printf("Startup State B\n");
+//
+//					return Q_HANDLED();
+//		}
+//
+//	}
+//
+//	return Q_SUPER(&LCD_on);
+//
+//}
+
+
+/* Create Lab2A_on state and do any initialization code if needed */
+/******************************************************************/
+
+QState LCD_Active(Lab2A *me) {
+	xil_printf("Signal (Active): %d\r\n", Q_SIG(me));
+	//enableTimerInt();
+	switch (Q_SIG(me)) {
+		case Q_ENTRY_SIG: {
+//			xil_printf("Startup State A\n");
+			//start timer
+			return Q_HANDLED();
+		}
+
+		case Q_EXIT_SIG:
+			return Q_HANDLED();
+
+		case ENCODER_UP: {
+			XTmrCtr_Reset(&tmr, 0);
+			xil_printf("Encoder Up from State A\r\n");
+			if (me->volume >= 63)
+				me->volume = 63;
+			else
+				me->volume++;
+			if (Volume_Idle) {
+					printVolume(me->volume, 1);
+					Volume_Idle = 0;
+				} else {
+					printVolume(me->volume, 0);
+			}
+			return Q_HANDLED();
+		}
+
+		case ENCODER_DOWN: {
+			XTmrCtr_Reset(&tmr, 0);
+//			xil_printf("Encoder Down from State A\r\n");
+			if (me->volume <= 0) {
+				me->volume = 0;
+				me->prev_vol = 0;
+			} else {
+				me->volume--;
+			}
+			if (Volume_Idle) {
+				printVolume(me->volume, 1);
+				Volume_Idle = 0;
+			} else {
+				printVolume(me->volume, 0);
+			}
+			return Q_HANDLED();
+		}
+
+		case ENCODER_CLICK:  {
+			XTmrCtr_Reset(&tmr, 0);
+//			xil_printf("Changing State\n");
+			if (me->volume != 0) {
+				me->prev_vol = me->volume;
+				me->volume = 0;
+			} else {
+				me->volume = me->prev_vol;
+			}
+			if (Volume_Idle) {
+								printVolume(me->volume, 1);
+								Volume_Idle = 0;
+							} else {
+								printVolume(me->volume, 0);
+						}
+			return Q_HANDLED();
+		}
+
+		case MODE1: {
+			XTmrCtr_Reset(&tmr, 0);
+					printText("Mode:1", 70, 140);
+					return Q_TRAN(&LCD_Active);
+				}
+				case MODE2: {
+					XTmrCtr_Reset(&tmr, 0);
+							printText("Mode:2", 70, 140);
+							return Q_TRAN(&LCD_Active);
+						}
+				case MODE3: {
+					XTmrCtr_Reset(&tmr, 0);
+							printText("Mode:3", 70, 140);
+							return Q_TRAN(&LCD_Active);
+						}
+				case MODE4: {
+					XTmrCtr_Reset(&tmr, 0);
+							printText("Mode:4", 70, 140);
+							return Q_TRAN(&LCD_Active);
+						}
+				case MODE5: {
+					XTmrCtr_Reset(&tmr, 0);
+							printText("Mode:5", 70, 140);
+							return Q_TRAN(&LCD_Active);
+						}
+
+		case HIDE: {
+			return Q_TRAN(&Menu);
+		}
+
+	}
+
+	return Q_SUPER(&LCD_on);
+
+}
+
+
+

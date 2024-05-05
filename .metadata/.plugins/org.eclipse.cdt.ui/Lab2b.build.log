@@ -1,0 +1,306 @@
+12:05:49 **** Build of configuration Debug for project Lab2b ****
+make all 
+'Building file: ../src/bsp.c'
+'Invoking: MicroBlaze gcc compiler'
+mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/bsp.o" -I../../Lab2b_bsp/microblaze_0/include -mlittle-endian -mxl-barrel-shift -mcpu=v11.0 -mno-xl-soft-mul -Wl,--no-relax -ffunction-sections -fdata-sections -MMD -MP -MF"src/bsp.d" -MT"src/bsp.o" -o "src/bsp.o" "../src/bsp.c"
+In file included from ../src/qpn_port.h:38,
+                 from ../src/bsp.c:7:
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:120:2: warning: #warning The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert. [-Wcpp]
+ #warning  The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert.
+  ^~~~~~~
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:121:2: warning: #warning Please refer the Standalone BSP UG647 for further details [-Wcpp]
+ #warning  Please refer the Standalone BSP UG647 for further details
+  ^~~~~~~
+In file included from ../../Lab2b_bsp/microblaze_0/include/xgpio.h:132,
+                 from ../src/qpn_port.h:34,
+                 from ../src/bsp.c:7:
+../src/bsp.c: In function 'BSP_init':
+../../Lab2b_bsp/microblaze_0/include/xstatus.h:61:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^~
+../src/bsp.c:82:10: note: in expansion of macro 'XST_FAILURE'
+   return XST_FAILURE;
+          ^~~~~~~~~~~
+../src/bsp.c:59:6: note: declared here
+ void BSP_init(void) {
+      ^~~~~~~~
+In file included from ../../Lab2b_bsp/microblaze_0/include/xgpio.h:132,
+                 from ../src/qpn_port.h:34,
+                 from ../src/bsp.c:7:
+../../Lab2b_bsp/microblaze_0/include/xstatus.h:61:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^~
+../src/bsp.c:90:10: note: in expansion of macro 'XST_FAILURE'
+   return XST_FAILURE;
+          ^~~~~~~~~~~
+../src/bsp.c:59:6: note: declared here
+ void BSP_init(void) {
+      ^~~~~~~~
+In file included from ../../Lab2b_bsp/microblaze_0/include/xgpio.h:132,
+                 from ../src/qpn_port.h:34,
+                 from ../src/bsp.c:7:
+../../Lab2b_bsp/microblaze_0/include/xstatus.h:61:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^~
+../src/bsp.c:97:10: note: in expansion of macro 'XST_FAILURE'
+   return XST_FAILURE;
+          ^~~~~~~~~~~
+../src/bsp.c:59:6: note: declared here
+ void BSP_init(void) {
+      ^~~~~~~~
+In file included from ../../Lab2b_bsp/microblaze_0/include/xgpio.h:132,
+                 from ../src/qpn_port.h:34,
+                 from ../src/bsp.c:7:
+../../Lab2b_bsp/microblaze_0/include/xstatus.h:61:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^~
+../src/bsp.c:110:10: note: in expansion of macro 'XST_FAILURE'
+   return XST_FAILURE;
+          ^~~~~~~~~~~
+../src/bsp.c:59:6: note: declared here
+ void BSP_init(void) {
+      ^~~~~~~~
+In file included from ../../Lab2b_bsp/microblaze_0/include/xgpio.h:132,
+                 from ../src/qpn_port.h:34,
+                 from ../src/bsp.c:7:
+../../Lab2b_bsp/microblaze_0/include/xstatus.h:61:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^~
+../src/bsp.c:116:10: note: in expansion of macro 'XST_FAILURE'
+   return XST_FAILURE;
+          ^~~~~~~~~~~
+../src/bsp.c:59:6: note: declared here
+ void BSP_init(void) {
+      ^~~~~~~~
+In file included from ../../Lab2b_bsp/microblaze_0/include/xgpio.h:132,
+                 from ../src/qpn_port.h:34,
+                 from ../src/bsp.c:7:
+../../Lab2b_bsp/microblaze_0/include/xstatus.h:61:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^~
+../src/bsp.c:132:10: note: in expansion of macro 'XST_FAILURE'
+   return XST_FAILURE;
+          ^~~~~~~~~~~
+../src/bsp.c:59:6: note: declared here
+ void BSP_init(void) {
+      ^~~~~~~~
+In file included from ../../Lab2b_bsp/microblaze_0/include/xgpio.h:132,
+                 from ../src/qpn_port.h:34,
+                 from ../src/bsp.c:7:
+../../Lab2b_bsp/microblaze_0/include/xstatus.h:61:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^~
+../src/bsp.c:137:10: note: in expansion of macro 'XST_FAILURE'
+   return XST_FAILURE;
+          ^~~~~~~~~~~
+../src/bsp.c:59:6: note: declared here
+ void BSP_init(void) {
+      ^~~~~~~~
+In file included from ../../Lab2b_bsp/microblaze_0/include/xgpio.h:132,
+                 from ../src/qpn_port.h:34,
+                 from ../src/bsp.c:7:
+../../Lab2b_bsp/microblaze_0/include/xstatus.h:61:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^~
+../src/bsp.c:144:10: note: in expansion of macro 'XST_FAILURE'
+   return XST_FAILURE;
+          ^~~~~~~~~~~
+../src/bsp.c:59:6: note: declared here
+ void BSP_init(void) {
+      ^~~~~~~~
+In file included from ../../Lab2b_bsp/microblaze_0/include/xgpio.h:132,
+                 from ../src/qpn_port.h:34,
+                 from ../src/bsp.c:7:
+../../Lab2b_bsp/microblaze_0/include/xstatus.h:61:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^~
+../src/bsp.c:150:10: note: in expansion of macro 'XST_FAILURE'
+   return XST_FAILURE;
+          ^~~~~~~~~~~
+../src/bsp.c:59:6: note: declared here
+ void BSP_init(void) {
+      ^~~~~~~~
+In file included from ../../Lab2b_bsp/microblaze_0/include/xgpio.h:132,
+                 from ../src/qpn_port.h:34,
+                 from ../src/bsp.c:7:
+../../Lab2b_bsp/microblaze_0/include/xstatus.h:61:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^~
+../src/bsp.c:157:10: note: in expansion of macro 'XST_FAILURE'
+   return XST_FAILURE;
+          ^~~~~~~~~~~
+../src/bsp.c:59:6: note: declared here
+ void BSP_init(void) {
+      ^~~~~~~~
+In file included from ../../Lab2b_bsp/microblaze_0/include/xgpio.h:132,
+                 from ../src/qpn_port.h:34,
+                 from ../src/bsp.c:7:
+../../Lab2b_bsp/microblaze_0/include/xstatus.h:61:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^~
+../src/bsp.c:163:10: note: in expansion of macro 'XST_FAILURE'
+   return XST_FAILURE;
+          ^~~~~~~~~~~
+../src/bsp.c:59:6: note: declared here
+ void BSP_init(void) {
+      ^~~~~~~~
+In file included from ../../Lab2b_bsp/microblaze_0/include/xgpio.h:132,
+                 from ../src/qpn_port.h:34,
+                 from ../src/bsp.c:7:
+../../Lab2b_bsp/microblaze_0/include/xstatus.h:62:41: warning: 'return' with a value, in function returning void
+ #define XST_DEVICE_NOT_FOUND            2L
+                                         ^~
+../src/bsp.c:177:10: note: in expansion of macro 'XST_DEVICE_NOT_FOUND'
+   return XST_DEVICE_NOT_FOUND;
+          ^~~~~~~~~~~~~~~~~~~~
+../src/bsp.c:59:6: note: declared here
+ void BSP_init(void) {
+      ^~~~~~~~
+In file included from ../../Lab2b_bsp/microblaze_0/include/xgpio.h:132,
+                 from ../src/qpn_port.h:34,
+                 from ../src/bsp.c:7:
+../../Lab2b_bsp/microblaze_0/include/xstatus.h:61:41: warning: 'return' with a value, in function returning void
+ #define XST_FAILURE                     1L
+                                         ^~
+../src/bsp.c:183:10: note: in expansion of macro 'XST_FAILURE'
+   return XST_FAILURE;
+          ^~~~~~~~~~~
+../src/bsp.c:59:6: note: declared here
+ void BSP_init(void) {
+      ^~~~~~~~
+../src/bsp.c:201:2: warning: implicit declaration of function 'initLCD' [-Wimplicit-function-declaration]
+  initLCD();
+  ^~~~~~~
+../src/bsp.c:202:2: warning: implicit declaration of function 'clrScr' [-Wimplicit-function-declaration]
+  clrScr();
+  ^~~~~~
+../src/bsp.c: In function 'QF_onStartup':
+../src/bsp.c:212:2: warning: implicit declaration of function 'drawBackground' [-Wimplicit-function-declaration]
+  drawBackground(0, 0, 240, 320);
+  ^~~~~~~~~~~~~~
+../src/bsp.c: In function 'GpioHandler':
+../src/bsp.c:313:9: warning: variable 'mode' set but not used [-Wunused-but-set-variable]
+   short mode = 0;
+         ^~~~
+../src/bsp.c: In function 'TwistHandler':
+../src/bsp.c:348:9: warning: unused variable 'GpioPtr' [-Wunused-variable]
+  XGpio *GpioPtr = (XGpio *) CallbackRef;
+         ^~~~~~~
+'Finished building: ../src/bsp.c'
+' '
+'Building file: ../src/fonts.c'
+'Invoking: MicroBlaze gcc compiler'
+mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/fonts.o" -I../../Lab2b_bsp/microblaze_0/include -mlittle-endian -mxl-barrel-shift -mcpu=v11.0 -mno-xl-soft-mul -Wl,--no-relax -ffunction-sections -fdata-sections -MMD -MP -MF"src/fonts.d" -MT"src/fonts.o" -o "src/fonts.o" "../src/fonts.c"
+'Finished building: ../src/fonts.c'
+' '
+'Building file: ../src/lab2a.c'
+'Invoking: MicroBlaze gcc compiler'
+mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/lab2a.o" -I../../Lab2b_bsp/microblaze_0/include -mlittle-endian -mxl-barrel-shift -mcpu=v11.0 -mno-xl-soft-mul -Wl,--no-relax -ffunction-sections -fdata-sections -MMD -MP -MF"src/lab2a.d" -MT"src/lab2a.o" -o "src/lab2a.o" "../src/lab2a.c"
+In file included from ../src/qpn_port.h:38,
+                 from ../src/lab2a.c:8:
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:120:2: warning: #warning The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert. [-Wcpp]
+ #warning  The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert.
+  ^~~~~~~
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:121:2: warning: #warning Please refer the Standalone BSP UG647 for further details [-Wcpp]
+ #warning  Please refer the Standalone BSP UG647 for further details
+  ^~~~~~~
+../src/lab2a.c: In function 'LCD_Active':
+../src/lab2a.c:95:4: warning: implicit declaration of function 'enableTimerInt' [-Wimplicit-function-declaration]
+    enableTimerInt();
+    ^~~~~~~~~~~~~~
+../src/lab2a.c: In function 'LCD_Idle':
+../src/lab2a.c:197:4: warning: implicit declaration of function 'disableTimerInt' [-Wimplicit-function-declaration]
+    disableTimerInt();
+    ^~~~~~~~~~~~~~~
+'Finished building: ../src/lab2a.c'
+' '
+'Building file: ../src/lcd.c'
+'Invoking: MicroBlaze gcc compiler'
+mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/lcd.o" -I../../Lab2b_bsp/microblaze_0/include -mlittle-endian -mxl-barrel-shift -mcpu=v11.0 -mno-xl-soft-mul -Wl,--no-relax -ffunction-sections -fdata-sections -MMD -MP -MF"src/lcd.d" -MT"src/lcd.o" -o "src/lcd.o" "../src/lcd.c"
+In file included from ../src/qpn_port.h:38,
+                 from ../src/lcd.c:56:
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:120:2: warning: #warning The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert. [-Wcpp]
+ #warning  The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert.
+  ^~~~~~~
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:121:2: warning: #warning Please refer the Standalone BSP UG647 for further details [-Wcpp]
+ #warning  Please refer the Standalone BSP UG647 for further details
+  ^~~~~~~
+../src/lcd.c: In function 'tri':
+../src/lcd.c:300:9: warning: implicit declaration of function 'abs' [-Wimplicit-function-declaration]
+     x = abs(20 - x);
+         ^~~
+../src/lcd.c: In function 'drawBackground':
+../src/lcd.c:305:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+     if(w==0 || h==0)
+     ^~
+../src/lcd.c:308:2: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the 'if'
+  setColor(120, 180, 20);
+  ^~~~~~~~
+'Finished building: ../src/lcd.c'
+' '
+'Building file: ../src/main.c'
+'Invoking: MicroBlaze gcc compiler'
+mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/main.o" -I../../Lab2b_bsp/microblaze_0/include -mlittle-endian -mxl-barrel-shift -mcpu=v11.0 -mno-xl-soft-mul -Wl,--no-relax -ffunction-sections -fdata-sections -MMD -MP -MF"src/main.d" -MT"src/main.o" -o "src/main.o" "../src/main.c"
+In file included from ../src/qpn_port.h:38,
+                 from ../src/main.c:6:
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:120:2: warning: #warning The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert. [-Wcpp]
+ #warning  The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert.
+  ^~~~~~~
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:121:2: warning: #warning Please refer the Standalone BSP UG647 for further details [-Wcpp]
+ #warning  Please refer the Standalone BSP UG647 for further details
+  ^~~~~~~
+'Finished building: ../src/main.c'
+' '
+'Building file: ../src/qepn.c'
+'Invoking: MicroBlaze gcc compiler'
+mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/qepn.o" -I../../Lab2b_bsp/microblaze_0/include -mlittle-endian -mxl-barrel-shift -mcpu=v11.0 -mno-xl-soft-mul -Wl,--no-relax -ffunction-sections -fdata-sections -MMD -MP -MF"src/qepn.d" -MT"src/qepn.o" -o "src/qepn.o" "../src/qepn.c"
+In file included from ../src/qpn_port.h:38,
+                 from ../src/qepn.c:28:
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:120:2: warning: #warning The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert. [-Wcpp]
+ #warning  The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert.
+  ^~~~~~~
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:121:2: warning: #warning Please refer the Standalone BSP UG647 for further details [-Wcpp]
+ #warning  Please refer the Standalone BSP UG647 for further details
+  ^~~~~~~
+'Finished building: ../src/qepn.c'
+' '
+'Building file: ../src/qfn.c'
+'Invoking: MicroBlaze gcc compiler'
+mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/qfn.o" -I../../Lab2b_bsp/microblaze_0/include -mlittle-endian -mxl-barrel-shift -mcpu=v11.0 -mno-xl-soft-mul -Wl,--no-relax -ffunction-sections -fdata-sections -MMD -MP -MF"src/qfn.d" -MT"src/qfn.o" -o "src/qfn.o" "../src/qfn.c"
+In file included from ../src/qpn_port.h:38,
+                 from ../src/qfn.c:28:
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:120:2: warning: #warning The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert. [-Wcpp]
+ #warning  The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert.
+  ^~~~~~~
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:121:2: warning: #warning Please refer the Standalone BSP UG647 for further details [-Wcpp]
+ #warning  Please refer the Standalone BSP UG647 for further details
+  ^~~~~~~
+'Finished building: ../src/qfn.c'
+' '
+'Building file: ../src/qfn_init.c'
+'Invoking: MicroBlaze gcc compiler'
+mb-gcc -Wall -O0 -g3 -c -fmessage-length=0 -MT"src/qfn_init.o" -I../../Lab2b_bsp/microblaze_0/include -mlittle-endian -mxl-barrel-shift -mcpu=v11.0 -mno-xl-soft-mul -Wl,--no-relax -ffunction-sections -fdata-sections -MMD -MP -MF"src/qfn_init.d" -MT"src/qfn_init.o" -o "src/qfn_init.o" "../src/qfn_init.c"
+In file included from ../src/qpn_port.h:38,
+                 from ../src/qfn_init.c:28:
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:120:2: warning: #warning The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert. [-Wcpp]
+ #warning  The xbasics_type.h file is deprecated and users should use xil_types.h and xil_assert.
+  ^~~~~~~
+../../Lab2b_bsp/microblaze_0/include/xbasic_types.h:121:2: warning: #warning Please refer the Standalone BSP UG647 for further details [-Wcpp]
+ #warning  Please refer the Standalone BSP UG647 for further details
+  ^~~~~~~
+'Finished building: ../src/qfn_init.c'
+' '
+'Building target: Lab2b.elf'
+'Invoking: MicroBlaze gcc linker'
+mb-gcc -Wl,-T -Wl,../src/lscript.ld -L../../Lab2b_bsp/microblaze_0/lib -mlittle-endian -mxl-barrel-shift -mcpu=v11.0 -mno-xl-soft-mul -Wl,--no-relax -Wl,--gc-sections -o "Lab2b.elf"  ./src/bsp.o ./src/fonts.o ./src/lab2a.o ./src/lcd.o ./src/main.o ./src/qepn.o ./src/qfn.o ./src/qfn_init.o   -Wl,--start-group,-lxil,-lgcc,-lc,--end-group
+'Finished building target: Lab2b.elf'
+' '
+'Invoking: MicroBlaze Print Size'
+mb-size Lab2b.elf  |tee "Lab2b.elf.size"
+   text	   data	    bss	    dec	    hex	filename
+  31084	   5044	   8672	  44800	   af00	Lab2b.elf
+'Finished building: Lab2b.elf.size'
+' '
+
+12:05:52 Build Finished (took 3s.480ms)
+

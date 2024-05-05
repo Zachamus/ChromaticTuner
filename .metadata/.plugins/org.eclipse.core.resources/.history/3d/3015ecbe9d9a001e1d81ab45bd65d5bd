@@ -1,0 +1,299 @@
+#include "fft.h"
+#include "complex.h"
+#include "trig.h"
+
+#define SAMPLE_SIZE 512
+#define BIN_SIZE 256
+
+static float new_[SAMPLE_SIZE];
+static float new_im[SAMPLE_SIZE];
+
+float fft(float* re, float* im, int samples, int M, float sample_f, int drawHist) {
+	int a,b,d,e,c;
+	int k,place;
+	a=samples>>1;
+	b=1;
+	int i,j;
+	float real=0,imagine=0;
+	float max,frequency;
+
+	int temp;
+
+	ffti_shuffle_f(re, (int) log2(samples));
+	ffti_shuffle_f(im, (int) log2(samples));
+
+	for (int i=0; i<n;i++){
+		new_[i] = re[i];
+		new_im[i] = im[i];
+	}
+
+//	ffti_evaluate_f(q, w, (int) log2(n));
+
+	unsigned log_2_N = (int) log2(n);
+
+	unsigned N;
+		    unsigned r;
+		    unsigned m, md2;
+		    unsigned n, k;
+		    unsigned i_e, i_o;
+		    double theta_2pi;
+		    double theta;       /* Use double for precision */
+		    //struct complex_d Wm, Wmk;  /* Use double for precision */
+		    double Wm_re;
+		    double Wm_im;
+		    double Wmk_re;
+		    double Wmk_im;
+		    //struct complex_d u, t;     /* Use double for precision */
+		    double u_re;
+		    double u_im;
+		    double t_re;
+		    double t_im;
+
+		    N = 1 << log2_N;
+		    theta_2pi = -PI * 2;
+
+		    for (r = 1; r <= log2_N; r++)
+		    {
+		        m = 1 << r;
+		        md2 = m >> 1;
+		        theta = theta_2pi / m;
+		        //Wm_re = cosLUT[r - 1];
+		        //Wm_im = sinLUT[r - 1];
+		        Wm_re = cos(theta);
+		        Wm_im = sin(theta);
+		        for (n = 0; n < N; n += m)
+		        {
+		            Wmk_re = 1.f;
+		            Wmk_im = 0.f;
+		            for (k = 0; k < md2; k++)
+		            {
+		                i_e = n + k;
+		                i_o = i_e + md2;
+		                u_re = re[i_e];
+		                u_im = im[i_e];
+		                t_re = complex_mul_re(Wmk_re, Wmk_im, re[i_o], im[i_o]);
+		                t_im = complex_mul_im(Wmk_re, Wmk_im, re[i_o], im[i_o]);
+		                re[i_e] = u_re + t_re;
+		                im[i_e] = u_im + t_im;
+		                re[i_o] = u_re - t_re;
+		                im[i_o] = u_im - t_im;
+		                t_re = complex_mul_re(Wmk_re, Wmk_im, Wm_re, Wm_im);
+		                t_im = complex_mul_im(Wmk_re, Wmk_im, Wm_re, Wm_im);
+		                Wmk_re = t_re;
+		                Wmk_im = t_im;
+		            }
+		        }
+		    }
+
+
+	//find magnitudes
+	max=0;
+	place=1;
+	for(i=1;i<(n>>1);i++) {
+		new_[i]=q[i]*q[i]+w[i]*w[i];
+		if(max < new_[i]) {
+			max=new_[i];
+			place=i;
+		}
+	}
+	//max = bin w/ most amount of elemetns
+	//place = bin place
+	
+	float s=sample_f/n; //spacing of bins
+	//histogram ranges
+	//30 -> 320
+	//0 -> 240
+
+	int hist[BIN_SIZE] = {0};
+
+	if (drawHist) {
+		int y = 0;
+		for (int i = 1; i < n>>1; i++) {
+			float value = (new_[i] / max * 100.0);
+			hist[i] = (int) (value + 0.5);
+			y = i + 25;
+			setColor(147, 139, 161);
+			drawHLine(20 + hist[i], y, 150);
+			setColor(28, 68, 142);
+			drawHLine(20, y, hist[i]);
+		}
+	}
+
+	frequency = (sample_f/n)*place;
+
+	//curve fitting for more accuarcy
+	//assumes parabolic shape and uses three point to find the shift in the parabola
+	//using the equation y=A(x-x0)^2+C
+	float y1=new_[place-1],y2=new_[place],y3=new_[place+1];
+	float x0=s+(2*s*(y2-y1))/(2*y2-y1-y3);
+	x0=x0/s-1;
+	
+	if(x0 <0 || x0 > 2) { //error
+		return 0;
+	}
+	if(x0 <= 1)  {
+		frequency=frequency-(1-x0)*s;
+	}
+	else {
+		frequency=frequency+(x0-1)*s;
+	}
+	
+	return frequency;
+}
+
+void ffti_shuffle_f(float data[], unsigned log2_N)
+{
+    unsigned N = 1 << log2_N;   /* N */
+    unsigned Nd2 = N >> 1;      /* N/2 = number range midpoint */
+    unsigned Nm1 = N - 1;       /* N-1 = digit mask */
+    unsigned i;                 /* index for array elements */
+    unsigned j;                 /* index for next element swap location */
+
+    for (i = 0, j = 0; i < N; i++) {
+        if (j > i) {
+            float tmp = data[i];
+            data[i] = data[j];
+            data[j] = tmp;
+        }
+        unsigned lszb = ~i & (i + 1);
+        unsigned mszb = Nd2 / lszb;
+        unsigned bits = Nm1 & ~(mszb - 1);
+        j ^= bits;
+    }
+}
+
+void ffti_evaluate_f(float *re, float *im, int log2_N)
+{
+	unsigned N;
+	    unsigned r;
+	    unsigned m, md2;
+	    unsigned n, k;
+	    unsigned i_e, i_o;
+	    double theta_2pi;
+	    double theta;       /* Use double for precision */
+	    //struct complex_d Wm, Wmk;  /* Use double for precision */
+	    double Wm_re;
+	    double Wm_im;
+	    double Wmk_re;
+	    double Wmk_im;
+	    //struct complex_d u, t;     /* Use double for precision */
+	    double u_re;
+	    double u_im;
+	    double t_re;
+	    double t_im;
+
+	    N = 1 << log2_N;
+	    theta_2pi = -PI * 2;
+
+	    for (r = 1; r <= log2_N; r++)
+	    {
+	        m = 1 << r;
+	        md2 = m >> 1;
+	        theta = theta_2pi / m;
+	        //Wm_re = cosLUT[r - 1];
+	        //Wm_im = sinLUT[r - 1];
+	        Wm_re = cos(theta);
+	        Wm_im = sin(theta);
+	        for (n = 0; n < N; n += m)
+	        {
+	            Wmk_re = 1.f;
+	            Wmk_im = 0.f;
+	            for (k = 0; k < md2; k++)
+	            {
+	                i_e = n + k;
+	                i_o = i_e + md2;
+	                u_re = re[i_e];
+	                u_im = im[i_e];
+	                t_re = complex_mul_re(Wmk_re, Wmk_im, re[i_o], im[i_o]);
+	                t_im = complex_mul_im(Wmk_re, Wmk_im, re[i_o], im[i_o]);
+	                re[i_e] = u_re + t_re;
+	                im[i_e] = u_im + t_im;
+	                re[i_o] = u_re - t_re;
+	                im[i_o] = u_im - t_im;
+	                t_re = complex_mul_re(Wmk_re, Wmk_im, Wm_re, Wm_im);
+	                t_im = complex_mul_im(Wmk_re, Wmk_im, Wm_re, Wm_im);
+	                Wmk_re = t_re;
+	                Wmk_im = t_im;
+	            }
+	        }
+	    }
+}
+
+
+
+/*
+ * float newfft(Complex* a, int n, float sample_f) {
+	if (n <= 1) {
+		return;
+	}
+
+	// Split the array into even and odd parts
+	Complex* a_even = malloc((n / 2) * sizeof(Complex));
+	Complex* a_odd = malloc((n / 2) * sizeof(Complex));
+
+	for (int i = 0; i < n / 2; i++) {
+		a_even[i] = a[2 * i];
+		a_odd[i] = a[2 * i + 1];
+	}
+
+	// Recursively compute FFT for even and odd parts
+	newfft(a_even, n / 2, sample_f);
+	newfft(a_odd, n / 2, sample_f);
+
+	// Combine the results
+	for (int i = 0; i < n / 2; i++) {
+		double angle = -2.0 * PI * i / n;
+		double real_part = cos(angle);
+		double imag_part = sin(angle);
+
+		Complex t = {
+				real_part * a_odd[i].real - imag_part * a_odd[i].imag,
+	            real_part * a_odd[i].imag + imag_part * a_odd[i].real
+		};
+
+		a[i].real = a_even[i].real + t.real;
+		a[i].imag = a_even[i].imag + t.imag;
+		a[i + n / 2].real = a_even[i].real - t.real;
+		a[i + n / 2].imag = a_even[i].imag - t.imag;
+	}
+
+	//find magnitudes
+		float max=0;
+		int place=1;
+		for(int i = 1; i < (n>>1); i++) {
+			a[i].real = a[i].real * a[i].real + a[i].imag * a[i].imag;
+			if(max < a[i].real) {
+				max=a[i].real;
+				place=i;
+			}
+		}
+
+		float s = sample_f/n; //spacing of bins
+
+		float frequency = (sample_f/n) * place;
+
+		//curve fitting for more accuarcy
+		//assumes parabolic shape and uses three point to find the shift in the parabola
+		//using the equation y=A(x-x0)^2+C
+		/*(float y1=a[place-1].real, y2=a[place].real, y3 = a[place+1].real;
+		float x0= s + (2 * s * (y2 - y1))/(2 * y2 - y1 -y3);
+		x0 = x0 / s - 1;
+
+		if(x0 <0 || x0 > 2) { //error
+			return 0;
+		}
+		if(x0 <= 1)  {
+			frequency=frequency-(1-x0)*s;
+		}
+		else {
+			frequency=frequency+(x0-1)*s;
+		}
+
+		free(a_even);
+		free(a_odd);
+		return frequency;
+
+
+}
+ *
+ */

@@ -1,0 +1,67 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Define the maximum number of buckets (array size)
+#define HASH_MAP_SIZE 10
+
+// Structure for a key-value pair
+struct KeyValuePair {
+    char *key;
+    int value;
+    struct KeyValuePair *next;
+};
+
+// Structure for the hash map
+struct HashMap {
+    struct KeyValuePair *buckets[HASH_MAP_SIZE];
+};
+
+// Hash function to map a key to an index in the array
+unsigned int hash(char *key) {
+    unsigned int hashValue = 0;
+    while (*key) {
+        hashValue = (hashValue << 5) + *key++;
+    }
+    return hashValue % HASH_MAP_SIZE;
+}
+
+// Function to insert a key-value pair into the hash map
+void insert(struct HashMap *map, char *key, int value) {
+    unsigned int index = hash(key);
+
+    // Create a new key-value pair
+    struct KeyValuePair *newPair = malloc(sizeof(struct KeyValuePair));
+    newPair->key = strdup(key);
+    newPair->value = value;
+    newPair->next = NULL;
+
+    // Insert the new pair into the appropriate bucket
+    if (map->buckets[index] == NULL) {
+        map->buckets[index] = newPair;
+    } else {
+        // Handle collisions by chaining (linked list)
+        struct KeyValuePair *current = map->buckets[index];
+        while (current->next != NULL) {
+            current = current->next;
+        }
+        current->next = newPair;
+    }
+}
+
+// Function to retrieve the value associated with a key
+int get(struct HashMap *map, char *key) {
+    unsigned int index = hash(key);
+
+    // Search the linked list in the bucket for the key
+    struct KeyValuePair *current = map->buckets[index];
+    while (current != NULL) {
+        if (strcmp(current->key, key) == 0) {
+            return current->value;
+        }
+        current = current->next;
+    }
+
+    // Key not found
+    return -1;
+}
